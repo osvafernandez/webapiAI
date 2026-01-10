@@ -1,6 +1,7 @@
 using GroqSharp;
 using GroqSharp.Models;
 using Microsoft.AspNetCore.Mvc;
+using webapiAI.Common;
 using webapiAI.Dtos;
 
 namespace webapiAI.Endpoints;
@@ -36,12 +37,12 @@ public static class SimpleEndpoints
          var responseText = response?.ToString() ?? string.Empty;
 
           // If the model returned escaped newlines like "\n", convert them to real line breaks
-         responseText = responseText
-            .Replace("\\r\\n", "\n")
-            .Replace("\\n", "\n");
+         responseText = ResponseStringParser.ParseResponse(responseText);
 
          return responseText != null ? Results.Ok(responseText) : Results.NotFound();
       });
       return app;
+
    }
+
 }
