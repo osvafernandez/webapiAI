@@ -5,5 +5,7 @@ public class ModelService
 
     public string Model { get; set; } = "moonshotai/kimi-k2-instruct-0905";
 
+    public required string ApiKey { get; set; }
+
     public int MaxTokens { get; set; } = 4096;
 }
