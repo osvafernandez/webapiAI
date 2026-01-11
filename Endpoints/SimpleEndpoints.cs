@@ -18,19 +18,10 @@ public static class SimpleEndpoints
          return Results.Ok(new { Status = "API is running", Timestamp = DateTime.UtcNow });
       });
 
-      group.MapPost("/chat", async ([FromBody] PromptDto promptDto) =>
+      group.MapPost("/chat", async ([FromBody] PromptDto promptDto, ServiceBalancer balancer) =>
       {
-         DotNetEnv.Env.Load();
-         var apiKey = Environment.GetEnvironmentVariable("GROK_API_KEY")
-            ?? throw new InvalidOperationException("GROK_API_KEY (or GROQ_API_KEY) was not found in environment variables or .env.");
-         var apiModel = "moonshotai/kimi-k2-instruct-0905";
-         IGroqClient groqClient = new GroqClient(apiKey, apiModel)
-            .SetTemperature(0.6)
-            .SetMaxTokens(4096)
-            .SetTopP(1)
-            .SetStop("NONE")
-            .SetStructuredRetryPolicy(5);
-            // .SetBaseUrl(""); // luego probar con otro url para servicios distintos
+         var node = balancer.GetNext();
+         IGroqClient groqClient = GroqRequestBuilder.BuildClient(node.ApiKey, node.Model, node.MaxTokens, node.Uri);
          var response = await groqClient.CreateChatCompletionAsync(
             new Message { Role = MessageRoleType.User, Content = $"{promptDto.Prompt}" });
          Console.WriteLine(response);
@@ -39,7 +30,7 @@ public static class SimpleEndpoints
           // If the model returned escaped newlines like "\n", convert them to real line breaks
          responseText = ResponseStringParser.ParseResponse(responseText);
 
-         return responseText != null ? Results.Ok(responseText) : Results.NotFound();
+         return responseText != null ? Results.Ok(new { responseText }) : Results.NotFound();
       });
       return app;
 
