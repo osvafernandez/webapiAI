@@ -24,13 +24,12 @@ public static class SimpleEndpoints
          IGroqClient groqClient = GroqRequestBuilder.BuildClient(node.ApiKey, node.Model, node.MaxTokens, node.Uri);
          var response = await groqClient.CreateChatCompletionAsync(
             new Message { Role = MessageRoleType.User, Content = $"{promptDto.Prompt}" });
-         Console.WriteLine(response);
          var responseText = response?.ToString() ?? string.Empty;
 
           // If the model returned escaped newlines like "\n", convert them to real line breaks
          responseText = ResponseStringParser.ParseResponse(responseText);
 
-         return responseText != null ? Results.Ok(new { responseText }) : Results.NotFound();
+         return responseText != null ? Results.Text(responseText, "text/plain") : Results.NotFound();
       });
       return app;
 
